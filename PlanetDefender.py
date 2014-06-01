@@ -2,7 +2,7 @@
 # By Dathan Ault-McCoy
 # Game Idea By Finn Davis Owsley 
 # Python Build
-# Version 1.3
+# Version 1.6
 
 import sys, time, random, pygame
 
@@ -48,73 +48,73 @@ class UpgradeClass(pygame.sprite.Sprite):
 # pygame initialization
 pygame.init()                                   
 clock = pygame.time.Clock()
-screen = pygame.display.set_mode([1200, 1000])
+screen = pygame.display.set_mode([1000, 700])
 background = pygame.Surface(screen.get_size())
 pygame.key.set_repeat(1, 25)
 # makes the ship and weapons
 weaponDamage = 1
-shipSpeed = 11
+shipSpeed = 12
 friendlyShip = ShipClass('data/shipImage.bmp')
 weaponGroup = pygame.sprite.Group()
 # makes the enemies
+enemyCounter = 0
 enemyGroup = pygame.sprite.Group()
 enemyRange = 300
 # phase 1 enemies
-enemyNumber = 15
-def enemyGenerator(enemyNumber, enemyRange):
-	for i in range(0, enemyNumber):
-		enemyType = random.randint(1, 3)
-		if enemyType < 3:
-			enemyStats = ['data/enemyImage1.bmp', 1, [-15, 0], 10]
-		elif enemyType == 3:
-			enemyStats = ['data/enemyImage1.bmp', 2, [-10, 0], 15]
-		enemyGroup.add(EnemyClass(enemyStats[0], [screen.get_width() + 600 + i * 500, screen.get_height() / 2 + random.randint(-enemyRange, enemyRange)], enemyStats[2], enemyStats[1], enemyStats[3]))
-enemyGenerator(enemyNumber, enemyRange)
+def enemyGenerator(enemyRange):
+	enemyType = random.randint(1, 3)
+       	if enemyType < 3:
+       		enemyStats = ['data/enemyImage1.bmp', 1, [-15, 0], 10]
+       	elif enemyType == 3:
+       		enemyStats = ['data/enemyImage1.bmp', 2, [-10, 0], 15]
+       	enemyGroup.add(EnemyClass(enemyStats[0], [screen.get_width() + 600, screen.get_height() / 2 + random.randint(-enemyRange, enemyRange)], enemyStats[2], enemyStats[1], enemyStats[3]))
+	enemyCounter = 0
+enemyGenerator(enemyRange)
 # makes the power ups
 upgradeGroup = pygame.sprite.Group()
+upgradeCounter = 0
 def upgradeGenerator(enemyRange):
-	for i in range(0, 5):
-		powerupType = random.randint(1, 3)
-		if powerupType == 1:
-			upgradeStats = ['S', (100, 50, 255), 'shipspeed']
-		elif powerupType == 2:
-			upgradeStats = ['W', (100, 80, 5), 'weapondamage']
-		elif powerupType == 3:
-			upgradeStats = ['L', (255, 50, 50), 'livesup']
-		upgradeGroup.add(UpgradeClass(upgradeStats[0], upgradeStats[1], [screen.get_width() + 3000 + i * random.randint(1000, 3000), screen.get_height() / 2 + random.randint(-enemyRange, enemyRange)], [-12, 0], upgradeStats[2]))
+	powerupType = random.randint(1, 3)
+       	if powerupType == 1:
+       		upgradeStats = ['S', (100, 50, 255), 'shipspeed']
+       	elif powerupType == 2:
+       		upgradeStats = ['W', (100, 80, 5), 'weapondamage']
+       	elif powerupType == 3:
+       		upgradeStats = ['L', (255, 50, 50), 'livesup']
+       	upgradeGroup.add(UpgradeClass(upgradeStats[0], upgradeStats[1], [screen.get_width() + 3000 + random.randint(1000, 3000), screen.get_height() / 2 + random.randint(-enemyRange, enemyRange)], [-12, 0], upgradeStats[2]))
 upgradeGenerator(enemyRange)
 # sets game phase variables
 gameStart = False
-gameDone = False
 gameOver = False
 # start menu
 gameTitleFont = pygame.font.Font(None, 150)
 gameInstructionsFont = pygame.font.Font(None, 50)
 gameStartFont = pygame.font.Font(None, 75)
 gameTitleSurf = gameTitleFont.render('Planet Defender', 1, (255, 255, 255))
-gameInstructionsSurf = [gameInstructionsFont.render('UP ARROW: move up', 1, (255, 255, 255)), gameInstructionsFont.render('DOWN ARROW: move down', 1, (255, 255, 255)), gameInstructionsFont.render('SPACE: fire weapons', 1, (255, 255, 255))]
+gameInstructionsSurf = [gameInstructionsFont.render('UP ARROW: move up', 1, (255, 255, 255)), gameInstructionsFont.render('DOWN ARROW: move down', 1, (255, 255, 255)), gameInstructionsFont.render('SPACE: fire weapons', 1, (255, 255, 255)), gameInstructionsFont.render('P KEY: pause/unpause', 1, (255, 255, 255))]
 gameStartSurf = gameStartFont.render('PRESS ENTER TO START', 1, (255, 255, 255))
 gameIcon = pygame.image.load('data/enemyImage1.bmp') 
 # completed game screen
 congratulationsFont = pygame.font.Font(None, 100)
 finalScoreFont = pygame.font.Font(None, 75)
-congratulationsSurf = congratulationsFont.render('Congratulations!', 1, (255, 255, 255))
 highscoreFont = pygame.font.Font(None, 60)
 highscoreSurf = highscoreFont.render('NEW HIGHSCORE', 1, (255, 255, 255))
+highscoreScoreFont = pygame.font.Font(None, 65)
 # lost game screen
 gameOverFont = pygame.font.Font(None, 175)
-gameOverSurf = gameOverFont.render('Game Over', 1, (255, 255, 255))
+gameOverSurf = gameOverFont.render('GAME OVER', 1, (255, 255, 255))
 # sets the game variables
-lives = 5
+lives = 7
 score = 0
 # sets other variables
 repCounter = 0
+paused = False
 # font initialization
 pygame.font.init()
 
 while True:
 	# regulates the FPS
-	clock.tick(40)
+	clock.tick(30)
 	# empties the screen
 	screen.fill([0, 0, 0])
 	# runs the lives counter
@@ -123,7 +123,7 @@ while True:
 	# opens the highscore file
 	highscore = open('data/highscore.txt', 'r+')
 	# gets events
-	if gameStart and not (gameDone or gameOver):
+	if gameStart and not gameOver:
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				sys.exit()
@@ -142,9 +142,32 @@ while True:
 					if repCounter > 6:
 						weaponGroup.add(WeaponClass('data/weaponImage1.bmp', friendlyShip, [30, 0], 1))
 						repCounter = 0
+			if event.type == pygame.KEYUP:
+				# pauses the game
+				if event.key == pygame.K_p:
+					paused = True
+					while paused:
+						for event in pygame.event.get():
+							if event.type == pygame.QUIT:
+								sys.exit()
+							if event.type == pygame.KEYUP:
+								if event.key == pygame.K_p:
+									paused = False
+		# makes more enemies
+		if enemyCounter > 70:
+			enemyGenerator(enemyRange)
+			enemyCounter = 0
+		else:
+			enemyCounter += 1
+		# makes more upgrades
+		if upgradeCounter > 250:
+			upgradeGenerator(enemyRange)
+			upgradeCounter = 0
+		else:
+			enemyCounter += 1
 		for enemy in pygame.sprite.spritecollide(friendlyShip, enemyGroup, False):
 			# deals damage to you if an enemy hits your ship
-			lives -=1
+			lives -= 1
 			enemy.kill()
 		for upgrade in pygame.sprite.spritecollide(friendlyShip, upgradeGroup, False):
 			# gives you upgrades
@@ -196,16 +219,7 @@ while True:
 			enemyGroup.empty()
 			weaponGroup.empty()
 			upgradeGroup.empty()
-			enemyGenerator(enemyNumber, enemyRange)
-			upgradeGenerator(enemyRange)
-			weaponDamage = 1
-			shipSpeed = 11
-		# if you survive
-		if len(enemyGroup) < 1:
-			gameDone = True
-			weaponGroup.empty()
-			upgradeGroup.empty()
-			enemyGenerator(enemyNumber, enemyRange)
+			enemyGenerator(enemyRange)
 			upgradeGenerator(enemyRange)
 			weaponDamage = 1
 			shipSpeed = 11
@@ -214,34 +228,33 @@ while True:
 		# draws the lives counter
 		screen.blit(livesSurf, [10, 10])
 	# start menu
-	if not gameStart and not (gameDone or gameOver):
+	if not gameStart and not gameOver:
 		# resets lives
-		lives = 3
+		lives = 5
 		# gets the events
 		for event in pygame.event.get():
 			if event.type == pygame.KEYDOWN:
 				# starts the game
 				if event.key == pygame.K_RETURN:
 					gameStart = True
-					gameDone = False
 			# quits the game
 			if event.type == pygame.QUIT:
 				sys.exit()
 		# draws the icon
-		screen.blit(gameIcon, [screen.get_width() / 2 - gameIcon.get_width() / 2, screen.get_height() / 2 - 300])
+		screen.blit(gameIcon, [screen.get_width() / 2 - gameIcon.get_width() / 2, screen.get_height() / 2 - 200])
 		# draws the title
-		screen.blit(gameTitleSurf, [screen.get_width() / 2 - gameTitleSurf.get_width() / 2, screen.get_height() - 600])
+		screen.blit(gameTitleSurf, [screen.get_width() / 2 - gameTitleSurf.get_width() / 2, screen.get_height() - 450])
 		# draws the start instructions
-		screen.blit(gameStartSurf, [screen.get_width() / 2 - gameStartSurf.get_width() / 2, screen.get_height() - 450])
+		screen.blit(gameStartSurf, [screen.get_width() / 2 - gameStartSurf.get_width() / 2, screen.get_height() - 350])
 		# resets the counter variable
 		listPos = 0
 		# draws the game instructions
 		for surf in gameInstructionsSurf:
 			listPos += 1
-			screen.blit(surf, [screen.get_width() / 2 - surf.get_width() / 2, screen.get_height() - 350 + 40 * listPos])
+			screen.blit(surf, [screen.get_width() / 2 - surf.get_width() / 2, screen.get_height() - 300 + 40 * listPos])
 		# displays everything
 	# finish message
-	if gameStart and (gameDone or gameOver):
+	if gameStart and gameOver:
 		# gets events
 		for event in pygame.event.get():
 			# quits the game
@@ -251,27 +264,28 @@ while True:
 				# restarts the game
 				if event.key == pygame.K_RETURN:
 					gameStart = False
-					gameDone = False
 					gameOver = False
+					score = 0
 					time.sleep(0.3)
-		if gameDone:
-			# calculates your score
-			finalScoreSurf = finalScoreFont.render('Your final score was ' + str(lives * 63 + score), 1, (255, 255, 255))
-			# displays the congrtulatory message
-			screen.blit(congratulationsSurf, [screen.get_width() / 2 - congratulationsSurf.get_width() / 2, screen.get_height() / 2 - 200])
-			# displays your score
-			screen.blit(finalScoreSurf, [screen.get_width() / 2 - finalScoreSurf.get_width() / 2, screen.get_height() /2 - 100])
-			# checks for highscore
-			if score + lives * 63 >= int(highscore.read()):
-				# displays new highscore message
-				screen.blit(highscoreSurf, [screen.get_width() / 2 - highscoreSurf.get_width() / 2, screen.get_height() / 2])
-				# changes the highscore
-				highscore.seek(0)
-				highscore.truncate()
-				highscore.write(str(score + lives * 63))
-		elif gameOver:
-			# displays the gaqme over message
-			screen.blit(gameOverSurf, [screen.get_width() / 2 - gameOverSurf.get_width() / 2, screen.get_height() / 2])
+		# calculates your score
+	       	finalScoreSurf = finalScoreFont.render('Your final score was ' + str(score), 1, (255, 255, 255))
+	       	# displays the game over message
+	       	screen.blit(gameOverSurf, [screen.get_width() / 2 - gameOverSurf.get_width() / 2, screen.get_height() / 2 - 135])
+	       	# displays your score
+	       	screen.blit(finalScoreSurf, [screen.get_width() / 2 - finalScoreSurf.get_width() / 2, screen.get_height() /2 + 50])
+	       	# checks for highscore
+		highscore.seek(0)
+	       	if score >= int(highscore.read()):
+	       		# displays new highscore message
+	       		screen.blit(highscoreSurf, [screen.get_width() / 2 - highscoreSurf.get_width() / 2, screen.get_height() / 2 + 170])
+	       		# changes the highscore
+	       		highscore.seek(0)
+	       		highscore.truncate()
+	       		highscore.write(str(score))
+		# displays highscore
+		highscore.seek(0)
+		highscoreScoreSurf = highscoreScoreFont.render('Highscore: ' + str(highscore.read()), 1, (255, 255, 255)) 
+		screen.blit(highscoreScoreSurf, [screen.get_width() / 2 - highscoreScoreSurf.get_width() /2, screen.get_height() / 2 + 110])
 	pygame.display.flip()
 	highscore.close()
 
